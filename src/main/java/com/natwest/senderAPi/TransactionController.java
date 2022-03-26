@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,28 +25,29 @@ public class TransactionController {
     }
 
     @PostMapping(value="/", consumes = {"*/*"}, produces = {"*/*"})
-    public  void postingTransaction (@RequestBody Transaction newTransaction){
+    public  String  postingTransaction (@RequestBody Transaction newTransaction){
 
-        encryptData(newTransaction);
+        return encryptData(newTransaction);
     }
 
-    public void encryptData(Transaction transaction){
+    public String  encryptData(Transaction transaction){
         EncryptData encryptData = new EncryptData(transaction.toString());
         String encryptedData = encryptData.encodeBase64(transaction.toString());
         log.info("Data is encrypted");
-        sendEncryptedData(encryptedData);
+        return sendEncryptedData(encryptedData);
     }
 
-    public void sendEncryptedData(String encryptedData){
+    @ResponseBody
+    public String sendEncryptedData(String encryptedData){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> httpEntity = new HttpEntity<>(encryptedData,headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        String response = restTemplate.postForObject(recieverApi,httpEntity,String.class);
+        Transaction response = restTemplate.postForObject(recieverApi,httpEntity,Transaction.class);
 
-        log.info("API is posted"+response);
-
+        log.info("API is posted & response is"+response);
+        return  response.toString()+" is persisted";
     }
 }
